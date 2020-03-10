@@ -523,7 +523,82 @@ extension MFDD {
 
   public final class Inductive: Morphism {
 
-    
+    public typealias DD = MFDD
+
+    public typealias Result = (
+      take: [Value: (MFDD.Pointer) -> MFDD.Pointer],
+      skip: (MFDD.Pointer) -> MFDD.Pointer
+    )
+
+    /// The family returned if the morphism is applied on the one terminal.
+    public let substitute: MFDD
+
+    /// The function to apply on all non-terminal nodes.
+    public let function: (Inductive, MFDD.Pointer) -> Result
+
+    /// The factory that creates the nodes handled by this morphism.
+    public unowned let factory: MFDDFactory<Key, Value>
+
+    /// The morphism's cache.
+    private var cache: [MFDD.Pointer: MFDD.Pointer] = [:]
+
+    init(
+      substitute: MFDD?,
+      factory: MFDDFactory<Key, Value>,
+      function: @escaping (Inductive, MFDD.Pointer) -> Result)
+    {
+      self.substitute = substitute ?? factory.one
+      self.factory = factory
+      self.function = function
+    }
+
+    public func apply(on pointer: MFDD.Pointer) -> MFDD.Pointer {
+      // Check for trivial cases.
+      guard pointer != factory.zeroPointer
+        else { return pointer }
+      guard pointer != factory.onePointer
+        else { return substitute.pointer }
+
+      // Query the cache.
+      if let result = cache[pointer] {
+        return result
+      }
+
+      let fn = function(self, pointer)
+
+      // For practical reasons, note that both `fn.take` and `pointer.pointee.take` are partial
+      // functions over `Value` (which might represent an infinite domain). Hence, we assume that
+      // `fn.take` corresponds to the identity for all values outside of its domain, and that
+      // `pointer.pointee.take` corresponds to the zero terminal for all values outside of its
+      // domain. The rationale behind the latter assumption derives from that the "vanishing
+      // terminal" optimization removes all edges that directly point the zero terminal.
+      var take = pointer.pointee.take
+      for (value, morphism) in fn.take {
+        if let child = take[value] {
+          // This applies if both `fn.take` and `pointer.pointee.take` are defined for `value`.
+          take[value] = morphism(child)
+        } else {
+          // This applies if `fn.take` is defined for `value` while `pointer.pointee.take` is not.
+          take[value] = morphism(factory.zeroPointer)
+        }
+      }
+
+      let result = factory.node(
+        key: pointer.pointee.key,
+        take: take,
+        skip: fn.skip(pointer.pointee.skip))
+
+      cache[pointer] = result
+      return result
+    }
+
+    public func hash(into hasher: inout Hasher) {
+      hasher.combine(ObjectIdentifier(self))
+    }
+
+    public static func == (lhs: Inductive, rhs: Inductive) -> Bool {
+      lhs === rhs
+    }
 
   }
 
