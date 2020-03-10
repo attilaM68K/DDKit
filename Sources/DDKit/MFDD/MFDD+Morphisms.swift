@@ -564,10 +564,27 @@ extension MFDD {
         return result
       }
 
+      // For practical reasons, note that both `fn.take` and `pointer.pointee.take` are partial
+      // functions over `Value` (which might represent an infinite domain). Hence, we assume that
+      // `fn.take` corresponds to the identity for all values outside of its domain, and that
+      // `pointer.pointee.take` corresponds to the zero terminal for all values outside of its
+      // domain. The rationale behind the latter assumption derives from that the "vanishing
+      // terminal" optimization removes all edges that directly point the zero terminal.
+      var take = pointer.pointee.take
+      for (value, morphism) in fn.take {
+        if let child = take[value] {
+          // This applies if both `fn.take` and `pointer.pointee.take` are defined for `value`.
+          take[value] = morphism(child)
+        } else {
+          // This applies if `fn.take` is defined for `value` while `pointer.pointee.take` is not.
+          take[value] = morphism(factory.zeroPointer)
+        }
+      }
+
       let result = factory.node(
         key: pointer.pointee.key,
         take: take,
-        skip: fn.skip(pointer.pointee.skip))
+        skip: take
 
       cache[pointer] = result
       return result
