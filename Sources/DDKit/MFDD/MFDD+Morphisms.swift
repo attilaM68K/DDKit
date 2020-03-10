@@ -571,20 +571,11 @@ extension MFDD {
       // domain. The rationale behind the latter assumption derives from that the "vanishing
       // terminal" optimization removes all edges that directly point the zero terminal.
       var take = pointer.pointee.take
-      for (value, morphism) in fn.take {
-        if let child = take[value] {
-          // This applies if both `fn.take` and `pointer.pointee.take` are defined for `value`.
-          take[value] = morphism(child)
-        } else {
-          // This applies if `fn.take` is defined for `value` while `pointer.pointee.take` is not.
-          take[value] = morphism(factory.zeroPointer)
-        }
-      }
 
       let result = factory.node(
         key: pointer.pointee.key,
         take: take,
-        skip: take
+        skip: take,
 
       cache[pointer] = result
       return result
