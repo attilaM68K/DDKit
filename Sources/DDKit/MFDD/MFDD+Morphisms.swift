@@ -564,8 +564,6 @@ extension MFDD {
         return result
       }
 
-      let fn
-
       let result = factory.node(
         key: pointer.pointee.key,
         take: take,
