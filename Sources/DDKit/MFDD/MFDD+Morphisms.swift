@@ -521,7 +521,7 @@ extension MFDD {
 
   }
 
-  public final class Inductive: Morphism {
+/*  public final class Inductive: Morphism {
 
     public typealias DD = MFDD
 
@@ -589,7 +589,7 @@ extension MFDD {
       lhs === rhs
     }
 
-  }
+  }*/
 
 }
 
@@ -760,7 +760,7 @@ public final class MFDDMorphismFactory<Key, Value>
   }
 
   /// Creates an _inductive_ morphism.
-  public func inductive(
+  /*public func inductive(
     substitutingOneWith substitute: MFDD<Key, Value>? = nil,
     function: @escaping (
       MFDD<Key, Value>.Inductive,
@@ -769,7 +769,7 @@ public final class MFDDMorphismFactory<Key, Value>
   ) -> MFDD<Key, Value>.Inductive
   {
     MFDD.Inductive(substitute: substitute, factory: nodeFactory, function: function)
-  }
+  }*/
 
   // MARK: Saturation
 
